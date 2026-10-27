@@ -6,7 +6,7 @@ public class Main {
         Store myStore = new Store();
 
         while (true) {
-            System.out.println("\n===== STORE MANAGEMENT (FCFA) =====");
+            System.out.println("\n===== STORE MANAGEMENT SYSTEM (FCFA) =====");
             System.out.println("1. Add Product.java");
             System.out.println("2. View All Products");
             System.out.println("3. Search Product.java");
