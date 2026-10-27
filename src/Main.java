@@ -7,10 +7,10 @@ public class Main {
 
         while (true) {
             System.out.println("\n===== STORE MANAGEMENT SYSTEM (FCFA) =====");
-            System.out.println("1. Add Product.java");
+            System.out.println("1. Add Product");
             System.out.println("2. View All Products");
-            System.out.println("3. Search Product.java");
-            System.out.println("4. Sell Product.java");
+            System.out.println("3. Search Product");
+            System.out.println("4. Sell Product");
             System.out.println("5. Restock Product.java");
             System.out.println("6. Remove Product.java");
             System.out.println("7. View Sales History");
