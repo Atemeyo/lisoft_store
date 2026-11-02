@@ -1,92 +1,129 @@
 import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Store {
-    private Map<Integer, Product> products = new HashMap<>();
-    private List<String> salesHistory = new ArrayList<>();
-    private int nextId = 1;
+    public static class SaleRecord {
+        String productName;
+        int quantitySold;
+        double total;
+        String date;
+        String paymentMethod;
+        String employeeName;
 
-    public Store() {
-        // Your two Cameroonian products
-        addProductInternal("Garri", 1500, 100);
-        addProductInternal("Eru", 2500, 50);
+        SaleRecord(String productName, int quantitySold, double total, String paymentMethod, String employeeName) {
+            this.productName = productName;
+            this.quantitySold = quantitySold;
+            this.total = total;
+            this.paymentMethod = paymentMethod;
+            this.employeeName = employeeName;
+            this.date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+
+        public String getReceipt() {
+            return "\n========== LISOFT STORE RECEIPT ==========\n" +
+                   "Date: " + date + "\n" +
+                   "Employee: " + employeeName + "\n" +
+                   "----------------------------------------\n" +
+                   "Product: " + productName + "\n" +
+                   "Quantity: " + quantitySold + "\n" +
+                   "Payment: " + paymentMethod + "\n" +
+                   "----------------------------------------\n" +
+                   String.format("TOTAL: %,.0f FCFA\n", total) +
+                   "========================================\n" +
+                   "Thank you for your purchase!\n";
+        }
+
+        @Override
+        public String toString() {
+            return String.format("[%s] Emp: %s | %s x %d = %,.0f FCFA | Pay: %s", date, employeeName, productName, quantitySold, total, paymentMethod);
+        }
     }
 
-    private void addProductInternal(String name, double price, int qty) {
-        products.put(nextId, new Product(nextId, name, price, qty));
-        nextId++;
+    private Map<Integer, Product> products = new HashMap<>();
+    private List<SaleRecord> history = new ArrayList<>();
+    private Map<Integer, Employee> employees = new HashMap<>();
+    private int nextProductId = 1;
+    private int nextEmployeeId = 1;
+
+    public Store() {
+        products.put(nextProductId, new Product(nextProductId++, "Garri", 1500, 100));
+        products.put(nextProductId, new Product(nextProductId++, "Eru", 2500, 50));
+        employees.put(nextEmployeeId, new Employee(nextEmployeeId++, "Default Staff"));
+    }
+
+    public boolean isDuplicate(String name) {
+        for (Product p : products.values()) {
+            if (p.getName().equalsIgnoreCase(name.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void addProduct(String name, double price, int qty) {
-        products.put(nextId, new Product(nextId, name, price, qty));
-        System.out.println("Product.java added: " + products.get(nextId));
-        nextId++;
+        products.put(nextProductId, new Product(nextProductId, name, price, qty));
+        nextProductId++;
     }
 
-    public void viewAllProducts() {
-        if (products.isEmpty()) {
-            System.out.println("No products available.");
-            return;
-        }
-        System.out.println("\n--- All Products ---");
-        for (Product p : products.values()) {
-            System.out.println(p);
-        }
+    public Collection<Product> getAllProducts() {
+        return products.values();
     }
 
-    public void searchProduct(String keyword) {
-        boolean found = false;
+    public Product searchById(int id) {
+        return products.get(id);
+    }
+
+    public List<Product> searchByName(String name) {
+        List<Product> results = new ArrayList<>();
         for (Product p : products.values()) {
-            if (p.name.toLowerCase().contains(keyword.toLowerCase())) {
-                System.out.println(p);
-                found = true;
+            if (p.getName().toLowerCase().contains(name.toLowerCase())) {
+                results.add(p);
             }
         }
-        if (!found) System.out.println("No product found for: " + keyword);
+        return results;
     }
 
-    public void sellProduct(int id, int qty) {
+    public SaleRecord sellProduct(int id, int qty, String paymentMethod, String employeeName) {
         Product p = products.get(id);
-        if (p == null) {
-            System.out.println("Product.java ID not found.");
-            return;
+        if (p == null || !p.isActive() || p.getQuantity() < qty) {
+            return null;
         }
-        if (qty > p.quantity) {
-            System.out.println("Not enough stock! Available: " + p.quantity);
-            return;
-        }
-        p.quantity -= qty;
-        double total = p.price * qty;
-        String sale = String.format("Sold %d x %s = %,.0f FCFA", qty, p.name, total);
-        salesHistory.add(sale);
-        System.out.println(sale);
+        p.setQuantity(p.getQuantity() - qty);
+        double total = p.getPrice() * qty;
+        SaleRecord record = new SaleRecord(p.getName(), qty, total, paymentMethod, employeeName);
+        history.add(record);
+        return record;
     }
 
-    public void restockProduct(int id, int qty) {
+    public boolean restockProduct(int id, int qty) {
         Product p = products.get(id);
-        if (p == null) {
-            System.out.println("Product.java ID not found.");
-            return;
-        }
-        p.quantity += qty;
-        System.out.println("Restocked. New stock: " + p.quantity);
+        if (p == null) return false;
+        p.setQuantity(p.getQuantity() + qty);
+        return true;
     }
 
-    public void removeProduct(int id) {
-        if (products.remove(id) != null) {
-            System.out.println("Product.java removed.");
-        } else {
-            System.out.println("ID not found.");
-        }
+    public boolean setProductStatus(int id, boolean active) {
+        Product p = products.get(id);
+        if (p == null) return false;
+        p.setActive(active);
+        return true;
     }
 
-    public void viewSalesHistory() {
-        if (salesHistory.isEmpty()) {
-            System.out.println("No sales yet.");
-            return;
-        }
-        System.out.println("\n--- Sales History ---");
-        for (String s : salesHistory) {
-            System.out.println(s);
-        }
+    public List<SaleRecord> getHistory() {
+        return history;
+    }
+
+    public void addEmployee(String name) {
+        employees.put(nextEmployeeId, new Employee(nextEmployeeId, name));
+        nextEmployeeId++;
+    }
+
+    public Collection<Employee> getAllEmployees() {
+        return employees.values();
+    }
+
+    public Employee getEmployee(int id) {
+        return employees.get(id);
     }
 }
